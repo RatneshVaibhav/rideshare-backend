@@ -1,0 +1,362 @@
+# 📮 Postman Testing Guide - RideShare API
+
+Complete guide for testing the RideShare Backend API using Postman.
+
+---
+
+## 📥 Quick Start
+
+### **Step 1: Import Files**
+
+1. Open Postman
+2. Click **"Import"** (top-left corner)
+3. Navigate to `postman/` folder in this repository
+4. Select both files:
+   - `RideShare_API_Collection.json`
+   - `RideShare_Environment.json`
+5. Click **"Import"**
+
+### **Step 2: Activate Environment**
+
+1. Look at the **top-right corner** of Postman
+2. Click the **environment dropdown** (shows "No Environment")
+3. Select **"RideShare Local"**
+4. ✅ Environment is now active!
+
+### **Step 3: Verify Setup**
+
+1. In the left sidebar, expand **"RideShare API"** collection
+2. You should see folders:
+   - 📁 Auth (4 requests)
+   - 📁 User (2 requests)
+   - 📁 Driver (3 requests)
+   - 📁 Error Cases (3 requests)
+3. Click any request to view pre-configured settings
+
+---
+
+## 🎯 Testing Workflow
+
+### **Complete Test Sequence (Follow in Order)**
+
+#### **Phase 1: Authentication** 🔐
+
+##### 1. Register User
+- **Folder:** Auth
+- **Request:** Auth - Register User
+- **Expected:** `200 OK` - "User registered successfully"
+- **Screenshot:** Take screenshot #1
+
+##### 2. Register Driver
+- **Folder:** Auth
+- **Request:** Auth - Register Driver
+- **Expected:** `200 OK` - "Driver registered successfully"
+- **Screenshot:** Take screenshot #2
+
+##### 3. Login User
+- **Folder:** Auth
+- **Request:** Auth - Login User
+- **Expected:** `200 OK` with JWT token
+- **Action:** ✅ Token auto-saves to `{{userToken}}`
+- **Screenshot:** Take screenshot #3 (highlight token!)
+
+##### 4. Login Driver
+- **Folder:** Auth
+- **Request:** Auth - Login Driver
+- **Expected:** `200 OK` with JWT token
+- **Action:** ✅ Token auto-saves to `{{driverToken}}`
+- **Screenshot:** Take screenshot #4 (highlight token!)
+
+---
+
+#### **Phase 2: User Actions** 👤
+
+##### 5. Create Ride Request
+- **Folder:** User
+- **Request:** Ride - Create
+- **Headers:** Authorization automatically uses `{{userToken}}`
+- **Expected:** `200 OK` with ride object (status: REQUESTED)
+- **Action:** ✅ Ride ID auto-saves to `{{rideId}}`
+- **Screenshot:** Take screenshot #5 (circle ride ID!)
+
+##### 6. View My Rides
+- **Folder:** User
+- **Request:** User - My Rides
+- **Headers:** Authorization automatically uses `{{userToken}}`
+- **Expected:** `200 OK` - Array of rides created by this user
+- **Screenshot:** Take screenshot #6
+
+---
+
+#### **Phase 3: Driver Actions** 🚗
+
+##### 7. View Pending Rides
+- **Folder:** Driver
+- **Request:** Driver - Pending Rides
+- **Headers:** Authorization automatically uses `{{driverToken}}`
+- **Expected:** `200 OK` - Array of rides with status "REQUESTED"
+- **Screenshot:** Take screenshot #7
+
+##### 8. Accept Ride
+- **Folder:** Driver
+- **Request:** Driver - Accept Ride
+- **URL:** Uses `{{rideId}}` from Step 5 automatically!
+- **Headers:** Authorization uses `{{driverToken}}`
+- **Expected:** `200 OK` - Ride status changes to "ACCEPTED"
+- **Screenshot:** Take screenshot #8
+
+##### 9. Complete Ride
+- **Folder:** Driver
+- **Request:** Ride - Complete
+- **URL:** Uses `{{rideId}}` automatically
+- **Headers:** Authorization uses `{{driverToken}}`
+- **Expected:** `200 OK` - Ride status changes to "COMPLETED"
+- **Screenshot:** Take screenshot #9
+
+---
+
+#### **Phase 4: Error Cases** ⚠️
+
+##### 10. Validation Error
+- **Folder:** Error Cases
+- **Request:** Validation Error - Empty Fields
+- **Body:** Empty pickup/drop locations
+- **Expected:** `400 Bad Request` - Validation error message
+- **Screenshot:** Take screenshot #10 (show 400 status in red!)
+
+##### 11. Unauthorized
+- **Folder:** Error Cases
+- **Request:** Unauthorized - No Token
+- **Headers:** Authorization header is disabled/removed
+- **Expected:** `401 Unauthorized`
+- **Screenshot:** Take screenshot #11 (show missing auth header!)
+
+##### 12. Forbidden
+- **Folder:** Error Cases
+- **Request:** Forbidden - Wrong Role
+- **Headers:** Uses `{{userToken}}` (USER) on DRIVER endpoint
+- **Expected:** `403 Forbidden`
+- **Screenshot:** Take screenshot #12 (show USER token on driver endpoint!)
+
+---
+
+## 🔧 Environment Variables
+
+The environment includes these variables (auto-populated during testing):
+
+| Variable | Description | Auto-Filled When |
+|----------|-------------|------------------|
+| `baseUrl` | API base URL | Pre-configured: `http://localhost:8081` |
+| `userToken` | User JWT token | Login User request (Step 3) |
+| `driverToken` | Driver JWT token | Login Driver request (Step 4) |
+| `rideId` | Latest ride ID | Create Ride request (Step 5) |
+
+### **View Environment Variables:**
+
+1. Click environment dropdown (top-right)
+2. Click on **"RideShare Local"**
+3. You'll see all variables and their current values
+
+---
+
+## 📝 Test Scripts Explained
+
+The collection includes automatic test scripts that extract values from responses.
+
+### **Login User Script:**
+```javascript
+let data = pm.response.json();
+pm.environment.set("userToken", data.token);
+```
+This automatically saves the JWT token to the environment!
+
+### **Login Driver Script:**
+```javascript
+let data = pm.response.json();
+pm.environment.set("driverToken", data.token);
+```
+
+### **Create Ride Script:**
+```javascript
+let data = pm.response.json();
+pm.environment.set("rideId", data.id);
+```
+
+**Result:** You don't need to manually copy-paste tokens! 🎉
+
+---
+
+## 🎨 Screenshot Guidelines
+
+When taking screenshots for documentation:
+
+### **What to Include:**
+- ✅ Request URL
+- ✅ Request method (POST/GET)
+- ✅ Request body (if applicable)
+- ✅ Response body
+- ✅ Status code (200, 400, 401, 403)
+- ✅ Headers tab (for authenticated requests)
+
+### **What to Highlight:**
+- 🔵 JWT tokens in login responses
+- 🔵 Ride IDs in create ride response
+- 🔴 Error status codes (400, 401, 403)
+- 🟢 Success status codes (200)
+
+### **Screenshot Tips:**
+1. Use Postman's split view (request + response)
+2. Click "Beautify" for readable JSON
+3. Zoom to 100% for clarity
+4. Crop unnecessary UI elements
+5. Number screenshots: `01-register-user.png`, `02-register-driver.png`, etc.
+
+---
+
+## ⚡ Quick Testing (All at Once)
+
+Postman allows running entire folders:
+
+1. Right-click on **"Auth"** folder
+2. Select **"Run folder"**
+3. Click **"Run RideShare API"**
+4. All requests in that folder run in sequence!
+
+**Note:** Do this ONLY after understanding each request individually.
+
+---
+
+## 🐛 Troubleshooting
+
+### **Issue: 401 Unauthorized**
+
+**Cause:** Missing or invalid token
+
+**Solution:**
+1. Re-run the login request (Step 3 or 4)
+2. Check if token saved: Click environment → verify `userToken` or `driverToken` has value
+3. Check Authorization header: Should be `Bearer {{userToken}}`
+
+---
+
+### **Issue: 403 Forbidden**
+
+**Cause:** Valid token but wrong role
+
+**Solution:**
+1. Verify you're using correct token:
+   - User endpoints → `{{userToken}}`
+   - Driver endpoints → `{{driverToken}}`
+2. Check the Headers tab for correct token variable
+
+---
+
+### **Issue: 400 Bad Request (Username exists)**
+
+**Cause:** User already registered
+
+**Solution:**
+1. Change username in request body:
+   - `"john"` → `"john2"` or `"john3"`
+2. Or delete MongoDB data:
+   ```bash
+   mongosh rideshare_db
+   db.users.deleteMany({})
+   ```
+
+---
+
+### **Issue: Test scripts not running**
+
+**Cause:** Scripts tab needs to be enabled
+
+**Solution:**
+1. Click on request
+2. Go to **"Scripts"** tab
+3. Check **"Post-response"** section
+4. Verify script is present and enabled
+
+---
+
+### **Issue: Variables not showing up**
+
+**Cause:** Environment not selected
+
+**Solution:**
+1. Check top-right corner
+2. Ensure **"RideShare Local"** is selected
+3. Not "No Environment"
+
+---
+
+## 🔄 Reset Testing
+
+To start fresh:
+
+### **Option 1: Clear MongoDB**
+```bash
+mongosh rideshare_db
+db.users.deleteMany({})
+db.rides.deleteMany({})
+```
+
+### **Option 2: Reset Environment Variables**
+1. Click environment dropdown
+2. Click on "RideShare Local"
+3. Clear `userToken`, `driverToken`, `rideId` values
+4. Save
+
+### **Option 3: Re-import Collection**
+1. Delete existing collection
+2. Re-import from `postman/` folder
+
+---
+
+## 📊 Expected Results Summary
+
+| Request | Status | Key Response |
+|---------|--------|--------------|
+| Register User | 200 | "User registered successfully" |
+| Register Driver | 200 | "Driver registered successfully" |
+| Login User | 200 | `{"token": "...", "role": "ROLE_USER"}` |
+| Login Driver | 200 | `{"token": "...", "role": "ROLE_DRIVER"}` |
+| Create Ride | 200 | `{"id": "...", "status": "REQUESTED"}` |
+| My Rides | 200 | Array of rides |
+| Pending Rides | 200 | Array of requested rides |
+| Accept Ride | 200 | `{"status": "ACCEPTED"}` |
+| Complete Ride | 200 | `{"status": "COMPLETED"}` |
+| Empty Fields | 400 | Validation error |
+| No Token | 401 | Unauthorized |
+| Wrong Role | 403 | Forbidden |
+
+---
+
+## 📚 Additional Resources
+
+- **Main README:** [README.md](../README.md)
+- **API Documentation:** See README's API section
+- **Postman Documentation:** https://learning.postman.com/docs/getting-started/introduction/
+
+---
+
+## 💡 Pro Tips
+
+1. **Use Collection Runner** for regression testing
+2. **Export updated collection** if you add custom requests
+3. **Share collection link** with team members
+4. **Create test assertions** in Scripts tab for automated testing
+5. **Use Pre-request Scripts** for dynamic data generation
+
+---
+
+## 🎯 Next Steps
+
+After testing:
+1. ✅ Verify all 12 screenshots are captured
+2. ✅ Add screenshots to `screenshots/` folder
+3. ✅ Update README if you modify any endpoints
+4. ✅ Commit everything to Git
+
+---
+
+**Happy Testing! 🚀**
